@@ -1,0 +1,14 @@
+# Kubric Agent Dependencies
+# To be expanded in Week 1-2
+
+# MCP SDK (when available)
+# mcp>=0.1.0
+
+# HTTP server (for Week 2)
+# fastapi>=0.100.0
+# uvicorn>=0.23.0
+
+# LLM integration (for Week 1-2)
+# anthropic>=0.18.0
+# openai>=1.0.0
+
