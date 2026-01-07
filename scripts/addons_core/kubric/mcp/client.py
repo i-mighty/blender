@@ -20,9 +20,8 @@ import bpy
 
 def is_blender_mcp_available():
     """
-    Check if Blender MCP server is available and running.
-    This can be done by checking if the Blender MCP add-on is installed,
-    or by attempting to connect to the MCP server.
+    Check if Blender MCP add-on is installed and available.
+    Since Blender MCP is now a built-in add-on, it should be available.
     """
     try:
         import addon_utils
@@ -36,6 +35,22 @@ def is_blender_mcp_available():
         return False
 
 
+def is_blender_mcp_running():
+    """
+    Check if Blender MCP server is currently running.
+    This checks if the socket server is listening on the default port.
+    """
+    try:
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(0.1)
+        result = sock.connect_ex(('localhost', 9876))
+        sock.close()
+        return result == 0
+    except Exception:
+        return False
+
+
 def get_mcp_server_status():
     """
     Get the status of Blender MCP server.
@@ -43,7 +58,9 @@ def get_mcp_server_status():
     """
     return {
         "available": is_blender_mcp_available(),
-        "running": False,  # TODO: Implement actual check
+        "running": is_blender_mcp_running(),
+        "port": 9876,
+        "host": "localhost",
     }
 
 

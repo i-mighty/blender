@@ -92,8 +92,8 @@ python -m kubric_agent.main
 
 - Blender 4.0 or later
 - Python 3.10+ (for backend agent)
-- Blender MCP add-on (separate add-on that runs MCP server in Blender)
-  - See: https://github.com/ahujasid/blender-mcp
+- Blender MCP add-on (now bundled with Blender in `scripts/addons_core/blender_mcp/`)
+  - Original source: https://github.com/ahujasid/blender-mcp
 
 ## How MCP Integration Works
 

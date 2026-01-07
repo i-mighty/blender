@@ -3,6 +3,7 @@
 ## Overview
 
 Kubric uses a three-component architecture:
+
 1. **Kubric Add-on** (Blender): UI and communication with agent
 2. **Kubric Agent** (Backend): AI agent that processes messages and calls Blender MCP
 3. **Blender MCP Server** (Blender): Exposes Blender operations via MCP protocol
@@ -10,10 +11,12 @@ Kubric uses a three-component architecture:
 ## Component Responsibilities
 
 ### 1. Kubric Add-on (Blender App)
+
 **Location**: `scripts/addons_core/kubric/`
 **Purpose**: User interface and communication with the agent
 
 **Responsibilities**:
+
 - Display UI panel in 3D Viewport sidebar
 - Chat interface for user input
 - Display agent responses and action history
@@ -22,10 +25,12 @@ Kubric uses a three-component architecture:
 - **Does NOT** communicate directly with Blender MCP
 
 ### 2. Kubric Agent (Backend Process)
+
 **Location**: `kubric_agent/`
 **Purpose**: AI agent that processes user requests and executes Blender operations
 
 **Responsibilities**:
+
 - Receive user messages from Kubric Add-on
 - Process messages with LLM (Claude/DeepSeek)
 - Plan actions and decide what Blender operations to perform
@@ -33,10 +38,12 @@ Kubric uses a three-component architecture:
 - Return results to Kubric Add-on
 
 ### 3. Blender MCP Server (Blender App)
-**Location**: Separate add-on (e.g., `blender-mcp` from GitHub)
+
+**Location**: `scripts/addons_core/blender_mcp/` (bundled with Blender)
 **Purpose**: Expose Blender operations via MCP protocol
 
 **Responsibilities**:
+
 - Run as an MCP server within Blender
 - Expose Blender operations as MCP tools (create_cube, scene_inspection, etc.)
 - Execute operations using `bpy` API
@@ -86,6 +93,7 @@ User (Review & Approve)
 
 1. **User** types "Add a cube" in Kubric panel
 2. **Kubric Add-on** sends HTTP request to Kubric Agent:
+
    ```json
    {
      "message": "Add a cube",
@@ -95,11 +103,13 @@ User (Review & Approve)
    ```
 
 3. **Kubric Agent** receives message:
+
    - Processes with LLM: understands "add a cube"
    - Decides to call Blender MCP tool: `create_cube`
    - Connects to Blender MCP Server (MCP client)
 
 4. **Kubric Agent** calls Blender MCP Server:
+
    ```json
    {
      "method": "tools/call",
@@ -111,15 +121,18 @@ User (Review & Approve)
    ```
 
 5. **Blender MCP Server** (running in Blender):
+
    - Receives MCP call
    - Executes: `bpy.ops.mesh.primitive_cube_add()`
    - Returns result: `{"success": true, "object_name": "Cube"}`
 
 6. **Kubric Agent** receives result:
+
    - Formats response for user
    - Returns to Kubric Add-on
 
 7. **Kubric Add-on**:
+
    - Shows preview of created cube
    - Displays message: "I've created a cube for you"
    - Shows review/approve UI
@@ -144,12 +157,15 @@ User (Review & Approve)
 ## Implementation Notes
 
 ### Blender MCP Server
-- Should be installed as a separate add-on (or we can bundle it)
-- Runs an HTTP server within Blender
-- Uses MCP protocol (JSON-RPC-like) to expose tools
+
+- **Bundled with Blender** in `scripts/addons_core/blender_mcp/`
+- Creates a socket server within Blender (port 9876)
+- Receives commands via JSON protocol
+- Executes Blender operations using `bpy` API
 - Examples: `create_cube`, `scene_inspection`, `apply_material`, etc.
 
 ### Kubric Agent MCP Client
+
 - Connects to Blender MCP Server as an MCP client
 - Uses MCP SDK (or custom implementation) to call tools
 - Handles tool discovery, execution, and error handling
@@ -157,26 +173,36 @@ User (Review & Approve)
 ### Communication Protocols
 
 1. **Add-on ↔ Agent**: HTTP REST or WebSocket
+
    - Simple request/response initially
    - WebSocket for real-time updates later
 
-2. **Agent ↔ Blender MCP**: MCP Protocol
-   - Standard MCP JSON-RPC-like protocol
+2. **Agent ↔ Blender MCP Server**: MCP Protocol
+
+   - Standard MCP JSON-RPC-like protocol (HTTP/JSON)
    - Tool calls, results, errors
+   - The Blender MCP Server connects to Blender MCP Addon via TCP socket (port 9876)
+
+3. **Blender MCP Server ↔ Blender MCP Addon**: TCP Socket (port 9876)
+   - JSON-based protocol
+   - Commands from server → addon
+   - Results from addon → server
 
 ## Current Implementation Status
 
 ### ✅ Implemented
+
 - Kubric Add-on basic structure
 - Kubric Agent skeleton
 - Basic UI panel
 
 ### 🚧 In Progress (Week 1)
+
 - Blender MCP integration
 - Communication between add-on and agent
 
 ### 📋 Planned
+
 - LLM integration in agent
 - MCP tool discovery and calling
 - Preview and review UI
-

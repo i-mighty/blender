@@ -19,11 +19,24 @@ class KUBRIC_PT_panel(Panel):
         row = layout.row()
         row.label(text="AI Assistant", icon="COMMENT")
 
+        from ..mcp import client as mcp_client
+        mcp_status = mcp_client.get_mcp_server_status()
+
+        if not mcp_status["available"]:
+            box = layout.box()
+            box.label(text="Blender MCP add-on not found", icon="ERROR")
+            box.label(text="Please enable Blender MCP add-on")
+        elif not mcp_status["running"]:
+            box = layout.box()
+            box.label(text="Blender MCP server not running", icon="INFO")
+            box.label(text="Start it in BlenderMCP panel")
+
         row = layout.row()
         row.prop(context.scene, "kubric_chat_input", text="")
 
         row = layout.row()
-        row.operator("kubric.send_message", text="Send", icon="PLAY")
+        op = row.operator("kubric.send_message", text="Send", icon="PLAY")
+        # The operator will check if MCP is running internally
 
 
 def register():

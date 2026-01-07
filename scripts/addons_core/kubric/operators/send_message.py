@@ -18,6 +18,17 @@ class KUBRIC_OT_send_message(Operator):
             self.report({"WARNING"}, "Message is empty")
             return {"CANCELLED"}
 
+        from ..mcp import client as mcp_client
+        mcp_status = mcp_client.get_mcp_server_status()
+
+        if not mcp_status["available"]:
+            self.report({"ERROR"}, "Blender MCP add-on not found. Please enable it.")
+            return {"CANCELLED"}
+
+        if not mcp_status["running"]:
+            self.report({"ERROR"}, "Blender MCP server not running. Start it in BlenderMCP panel.")
+            return {"CANCELLED"}
+
         self.report({"INFO"}, f"Message sent: {message}")
 
         context.scene.kubric_chat_input = ""
