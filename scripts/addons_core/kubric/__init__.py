@@ -21,6 +21,7 @@ from . import preferences
 from . import ui
 from . import operators
 from . import mcp
+from . import http_client
 
 
 def register():
@@ -35,6 +36,9 @@ def unregister():
     operators.unregister()
     mcp.unregister()
     preferences.unregister()
+    
+    # Reset HTTP client when unregistering
+    http_client.reset_client()
 
 
 if __name__ == "__main__":
