@@ -66,6 +66,30 @@ The Kubric add-on is located in `scripts/addons_core/kubric/` and will be automa
 
 ### Backend Agent
 
+#### Option 1: Docker (Recommended)
+
+1. Build and run with Docker Compose:
+
+```bash
+cd docker
+cp .env.example .env
+# Edit .env with your API keys
+docker-compose up -d
+```
+
+2. Or run standalone container:
+
+```bash
+docker build -t kubric-agent:latest -f docker/Dockerfile.agent .
+docker run -d \
+  --name kubric-agent \
+  -p 8000:8000 \
+  -e LLM_API_KEY=your_key_here \
+  kubric-agent:latest
+```
+
+#### Option 2: Local Python Installation
+
 1. Install dependencies:
 
 ```bash
@@ -78,6 +102,8 @@ pip install -r requirements.txt
 ```bash
 python -m kubric_agent.main
 ```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment options.
 
 ## Development Status
 

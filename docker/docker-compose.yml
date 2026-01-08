@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  kubric-agent:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: kubric-agent
+    ports:
+      - "${AGENT_PORT:-8000}:8000"
+    environment:
+      - AGENT_HOST=0.0.0.0
+      - AGENT_PORT=8000
+      - BLENDER_MCP_SERVER_URL=${BLENDER_MCP_SERVER_URL:-http://blender-mcp-server:8001}
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-claude-3-5-sonnet-20241022}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Mount config directory if needed
+      - ../kubric_agent/config:/app/config:ro
+      # Mount logs directory
+      - kubric-logs:/app/logs
+    networks:
+      - kubric-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  blender-mcp-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-server
+    container_name: blender-mcp-server
+    ports:
+      - "${MCP_SERVER_PORT:-8001}:8001"
+    environment:
+      - BLENDER_HOST=${BLENDER_HOST:-host.docker.internal}
+      - BLENDER_PORT=${BLENDER_PORT:-9876}
+    networks:
+      - kubric-network
+    depends_on:
+      - kubric-agent
+    restart: unless-stopped
+    # Note: On Linux, might need --network host or extra_hosts
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  kubric-network:
+    driver: bridge
+
+volumes:
+  kubric-logs:
+    driver: local
+

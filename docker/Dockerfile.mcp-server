@@ -1,0 +1,49 @@
+# Blender MCP Server Dockerfile
+# Note: This runs the MCP protocol server that connects to Blender MCP add-on
+
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements (if we create a requirements.txt for MCP server)
+# COPY extern/blender_mcp/requirements.txt /app/
+# RUN pip install --user --no-cache-dir -r requirements.txt
+
+# Install MCP dependencies
+RUN pip install --user --no-cache-dir mcp
+
+# Final stage
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed packages from builder
+COPY --from=builder /root/.local /root/.local
+
+# Make sure scripts in .local are usable
+ENV PATH=/root/.local/bin:$PATH
+
+# Copy MCP server code
+COPY extern/blender_mcp/ /app/blender_mcp/
+
+# Default environment variables
+ENV BLENDER_HOST=host.docker.internal
+ENV BLENDER_PORT=9876
+
+# Expose MCP server port (TBD - depends on MCP server implementation)
+EXPOSE 8001
+
+# Run MCP server
+# CMD ["python", "-m", "blender_mcp.server"]
+
