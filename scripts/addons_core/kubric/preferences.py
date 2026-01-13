@@ -8,7 +8,7 @@ from bpy.props import StringProperty, IntProperty, BoolProperty, EnumProperty
 
 
 class KubricPreferences(AddonPreferences):
-    bl_idname = __name__.split(".")[0]
+    bl_idname = "kubric"
 
     agent_server_url: StringProperty(
         name="Agent Server URL",

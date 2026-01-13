@@ -40,7 +40,11 @@ clean:
 
 # Run agent server
 run-agent:
-	cd kubric_agent && python -m kubric_agent.main
+	@if [ -f .venv/bin/activate ]; then \
+		.venv/bin/python -m kubric_agent.main; \
+	else \
+		python -m kubric_agent.main; \
+	fi
 
 # Docker
 docker-build:

@@ -18,7 +18,7 @@ class KUBRIC_PT_panel(Panel):
 
         # Header
         row = layout.row()
-        row.label(text="AI Assistant", icon="COMMENT")
+        row.label(text="AI Assistant", icon="CONSOLE")
 
         # Connection Status
         from ..http_client import get_client
@@ -53,31 +53,86 @@ class KUBRIC_PT_panel(Panel):
 
         # Chat History
         chat_history = getattr(context.scene, "kubric_chat_history", None)
+        
+        # Check if there's a pending message
+        wm = context.window_manager
+        is_pending = getattr(wm, "kubric_message_pending", False)
+        
         if chat_history and len(chat_history) > 0:
             box = layout.box()
-            box.label(text="Chat History", icon="TEXT")
+            header_row = box.row()
+            header_row.label(text="Chat History", icon="TEXTURE")
             
-            # Show last 5 messages
-            messages_to_show = min(5, len(chat_history))
-            for i in range(len(chat_history) - messages_to_show, len(chat_history)):
+            # Show pending indicator if message is being processed
+            if is_pending:
+                header_row.label(text="Processing...", icon="INFO")
+            
+            # Show messages (last 10 messages for better visibility)
+            messages_to_show = min(10, len(chat_history))
+            start_idx = max(0, len(chat_history) - messages_to_show)
+            
+            for i in range(start_idx, len(chat_history)):
                 msg = chat_history[i]
-                row = box.row()
                 role = getattr(msg, "role", "unknown")
                 message = getattr(msg, "message", "")
+                
+                if not message:
+                    continue
+                
+                # Create message row with better formatting
+                msg_row = box.row()
+                msg_row.scale_y = 0.85
+                
                 if role == "user":
-                    row.label(text=f"You: {message[:50]}{'...' if len(message) > 50 else ''}", icon="USER")
+                    # User message - right side
+                    msg_box = msg_row.box()
+                    msg_box.scale_x = 0.92
+                    split = msg_box.split(factor=0.95)
+                    col = split.column()
+                    col.alignment = 'RIGHT'
+                    # Split long messages into multiple lines
+                    for line in message.split('\n')[:3]:  # Max 3 lines per message
+                        if line.strip():
+                            col.label(text=line.strip(), icon="USER")
                 else:
-                    row.label(text=f"Agent: {message[:50]}{'...' if len(message) > 50 else ''}", icon="ASSET_MANAGER")
+                    # Agent message - left side
+                    split = msg_row.split(factor=0.08)
+                    split.label(text="", icon="ASSET_MANAGER")
+                    msg_box = split.box()
+                    msg_box.scale_x = 0.95
+                    col = msg_box.column()
+                    col.alignment = 'LEFT'
+                    # Split long messages into multiple lines
+                    for line in message.split('\n')[:5]:  # Max 5 lines per message
+                        if line.strip():
+                            col.label(text=line.strip())
+        else:
+            box = layout.box()
+            if is_pending:
+                box.label(text="Sending message...", icon="INFO")
+            else:
+                box.label(text="No messages yet", icon="CONSOLE")
+                box.label(text="Start a conversation below", icon="INFO")
 
         layout.separator()
 
-        # Input
-        row = layout.row()
-        row.prop(context.scene, "kubric_chat_input", text="")
-
-        row = layout.row()
+        # Input Section
+        box = layout.box()
+        row = box.row()
+        row.prop(context.scene, "kubric_chat_input", text="", icon="TEXTURE")
+        
+        row = box.row()
+        row.scale_y = 1.2
+        # Disable send button if not connected
+        if not agent_connected:
+            row.enabled = False
         op = row.operator("kubric.send_message", text="Send", icon="PLAY")
-        op.enabled = agent_connected
+            
+        # Helper text
+        if not agent_connected:
+            row = box.row()
+            row.scale_y = 0.8
+            row.label(text="Connect to agent to send messages", icon="INFO")
 
 
 class KUBRIC_PG_chat_message(bpy.types.PropertyGroup):

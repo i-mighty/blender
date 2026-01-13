@@ -2,30 +2,24 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-bl_info = {
-    "name": "Kubric",
-    "author": "Kubric Team",
-    "version": (0, 1, 0),
-    "blender": (4, 0, 0),
-    "location": "3D Viewport > Sidebar > Kubric",
-    "description": "AI-assisted 3D modeling with natural language interface",
-    "warning": "Development version",
-    "doc_url": "",
-    "support": "COMMUNITY",
-    "category": "3D View",
-}
+"""
+Test script to verify Kubric add-on is properly loaded
+Run this in Blender's Python console or as a script
+
+Usage in Blender's Python console:
+    import addon_utils
+    import kubric
+    kubric.test_addon()
+    
+Or directly:
+    from kubric import test_addon
+    test_addon()
+"""
 
 import bpy
 
-from . import preferences
-from . import ui
-from . import operators
-from . import mcp
-from . import http_client
-
-
-def test_addon():
-    """Test if Kubric add-on is properly loaded and registered"""
+def test_kubric_addon():
+    """Test if Kubric add-on is loaded and enabled"""
     print("=" * 60)
     print("Kubric Add-on Diagnostic Test")
     print("=" * 60)
@@ -82,31 +76,5 @@ def test_addon():
     
     return True
 
-
-def register():
-    try:
-        preferences.register()
-        operators.register()
-        ui.register()
-        mcp.register()
-        print("Kubric: Add-on registered successfully")
-    except Exception as e:
-        print(f"Kubric: Error during registration: {e}")
-        import traceback
-        traceback.print_exc()
-        raise
-
-
-def unregister():
-    ui.unregister()
-    operators.unregister()
-    mcp.unregister()
-    preferences.unregister()
-    
-    # Reset HTTP client when unregistering
-    http_client.reset_client()
-
-
 if __name__ == "__main__":
-    register()
-
+    test_kubric_addon()

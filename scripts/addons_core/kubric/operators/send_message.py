@@ -44,26 +44,50 @@ class KUBRIC_OT_send_message(Operator):
         # Clear input
         context.scene.kubric_chat_input = ""
 
+        # Set pending state
+        wm = context.window_manager
+        wm.kubric_message_pending = True
+        
+        # Store response data in window manager for timer callback
+        response_data = {"response": None, "error": None}
+        
         # Send message asynchronously
         def on_response(response, error):
-            """Callback for when response is received"""
-            if error:
-                self.report({"ERROR"}, f"Agent error: {error}")
-                return
-
-            if response:
+            """Callback for when response is received (runs in background thread)"""
+            response_data["response"] = response
+            response_data["error"] = error
+            # Register timer to update UI on main thread
+            bpy.app.timers.register(lambda: update_ui_from_timer(response_data, wm), first_interval=0.01)
+        
+        def update_ui_from_timer(data, window_manager):
+            """Update UI on main thread via timer"""
+            window_manager.kubric_message_pending = False
+            
+            if data["error"]:
+                # Add error to chat history
+                scene = bpy.context.scene
+                chat_history = getattr(scene, "kubric_chat_history", None)
+                if chat_history is not None:
+                    error_msg = chat_history.add()
+                    error_msg.role = "system"
+                    error_msg.message = f"Error: {data['error']}"
+                    error_msg.timestamp = bpy.utils.smpte_from_frame(scene.frame_current)
+            elif data["response"]:
                 # Add agent response to chat history
-                chat_history = getattr(bpy.context.scene, "kubric_chat_history", None)
+                scene = bpy.context.scene
+                chat_history = getattr(scene, "kubric_chat_history", None)
                 if chat_history is not None:
                     agent_msg = chat_history.add()
                     agent_msg.role = "assistant"
-                    agent_msg.message = response
-                    agent_msg.timestamp = bpy.utils.smpte_from_frame(bpy.context.scene.frame_current)
-                
-                # Trigger UI update
-                for area in bpy.context.screen.areas:
-                    if area.type == 'VIEW_3D':
-                        area.tag_redraw()
+                    agent_msg.message = data["response"]
+                    agent_msg.timestamp = bpy.utils.smpte_from_frame(scene.frame_current)
+            
+            # Trigger UI update
+            for area in bpy.context.screen.areas:
+                if area.type == 'VIEW_3D':
+                    area.tag_redraw()
+            
+            return None  # Don't repeat timer
 
         # Send in background thread
         client.send_message(message, callback=on_response)

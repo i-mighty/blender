@@ -32,7 +32,7 @@ def is_blender_mcp_available():
         )
         return blender_mcp_installed
     except Exception:
-        return False
+            return False
 
 
 def is_blender_mcp_running():

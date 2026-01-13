@@ -169,10 +169,10 @@ def get_client() -> KubricHTTPClient:
     global _http_client
     
     try:
-        prefs = bpy.context.preferences.addons[__name__.split(".")[0]].preferences
+        prefs = bpy.context.preferences.addons["kubric"].preferences
         base_url = prefs.agent_server_url
     except (AttributeError, KeyError):
-        # Fallback if preferences not loaded yet
+        # Fallback if preferences not loaded yet or add-on not enabled
         base_url = "http://localhost:8000"
     
     if _http_client is None or _http_client.base_url != base_url:
